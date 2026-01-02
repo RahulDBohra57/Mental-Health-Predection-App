@@ -4,7 +4,6 @@
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
 from prince import MCA
 from reportlab.pdfgen import canvas
@@ -13,7 +12,7 @@ from io import BytesIO
 from datetime import datetime
 
 # ============================================================
-# Load Trained Artifacts
+# Load Artifacts & Dataset
 # ============================================================
 
 @st.cache_resource
@@ -21,9 +20,10 @@ def load_artifacts():
     mca = joblib.load("mca_transformer.joblib")
     cluster_models = joblib.load("risk_band_cluster_models.joblib")
     severity_map = joblib.load("severity_map.joblib")
-    return mca, cluster_models, severity_map
+    data = pd.read_csv("Mental Health Dataset.csv")
+    return mca, cluster_models, severity_map, data
 
-mca, cluster_models, severity_map, ui_categories = load_artifacts()
+mca, cluster_models, severity_map, data = load_artifacts()
 
 # ============================================================
 # Feature Definitions
@@ -53,7 +53,7 @@ functional_impact = [
 ]
 
 # ============================================================
-# Friendly UI Labels
+# UI Labels
 # ============================================================
 
 friendly_labels = {
@@ -68,21 +68,19 @@ friendly_labels = {
 }
 
 # ============================================================
-# Risk Band Logic
+# Severity & Risk Logic
 # ============================================================
 
 def calculate_mdi(user_input):
     score = 0
 
     for col in core_symptoms + functional_impact:
-        value = user_input.get(col)
-        score += severity_map.get(value, 0)
+        score += severity_map.get(user_input.get(col), 0)
 
     # Reverse work interest (low interest = higher distress)
     score += (3 - severity_map.get(user_input.get("Work_Interest"), 0))
 
     return score
-
 
 def assign_risk_band(mdi):
     if mdi >= 10:
@@ -93,36 +91,47 @@ def assign_risk_band(mdi):
         return "Low"
 
 # ============================================================
-# Cluster Interpretation
+# Diagnosis & Suggestions
 # ============================================================
 
-cluster_interpretations = {
-    "Low": {
-        0: ("Stable & Balanced",
-            "You show emotional stability and healthy coping patterns."),
-        1: ("Mild Stress but Adaptive",
-            "You experience occasional stress but demonstrate resilience.")
-    },
-    "Moderate": {
-        0: ("Emotional Variability",
-            "You may experience mood fluctuations or inconsistent routines."),
-        1: ("Stress Accumulation",
-            "Stressors are building and may affect daily functioning."),
-        2: ("Emerging Burnout Pattern",
-            "Signs of fatigue or disengagement are becoming noticeable.")
-    },
-    "High": {
-        0: ("High Emotional Dysregulation",
-            "Strong emotional distress and difficulty regulating mood."),
-        1: ("Withdrawal & Burnout",
-            "Reduced engagement and emotional exhaustion are present."),
-        2: ("Acute Stress Overload",
-            "High stress levels may be overwhelming coping capacity.")
-    }
+diagnosis_map = {
+    "Low": "Your responses suggest stable emotional well-being with healthy coping patterns.",
+    "Moderate": "Your responses indicate ongoing stress that may be affecting daily balance and energy.",
+    "High": "Your responses reflect significant emotional strain that may be overwhelming your current coping capacity."
+}
+
+suggestions_map = {
+    "Low": [
+        "Maintain consistent sleep and daily routines.",
+        "Continue activities that help you relax or feel fulfilled.",
+        "Stay socially connected with people you trust.",
+        "Practice occasional self-reflection or journaling.",
+        "Keep clear boundaries between work and personal time.",
+        "Monitor stress levels and respond early when they rise."
+    ],
+    "Moderate": [
+        "Break daily tasks into smaller, manageable steps.",
+        "Schedule at least one restorative break each day.",
+        "Reduce non-essential commitments temporarily.",
+        "Engage in light physical activity like walking or stretching.",
+        "Practice slow breathing or grounding exercises.",
+        "Talk openly with a trusted friend or family member.",
+        "Re-establish consistent sleep and meal routines."
+    ],
+    "High": [
+        "Prioritize rest and reduce mental overload wherever possible.",
+        "Seek support from a trusted person instead of coping alone.",
+        "Use grounding techniques such as slow breathing or sensory focus.",
+        "Avoid making major decisions while feeling emotionally overwhelmed.",
+        "Create predictable daily structure using small routines.",
+        "Limit exposure to unnecessary stressors such as excessive news or social media.",
+        "Consider reaching out to a mental health professional for support.",
+        "Spend time in calming environments like nature or quiet spaces."
+    ]
 }
 
 # ============================================================
-# Prediction Function (Clinical-Grade)
+# Cluster Prediction
 # ============================================================
 
 def predict_cluster(user_input):
@@ -132,7 +141,6 @@ def predict_cluster(user_input):
     df = pd.DataFrame([user_input]).astype(str)
     X_mca = mca.transform(df[core_symptoms + functional_impact])
 
-    # Weight symptom-heavy components
     X_weighted = X_mca.copy()
     X_weighted.iloc[:, :3] = X_weighted.iloc[:, :3] * 2
 
@@ -142,17 +150,16 @@ def predict_cluster(user_input):
     return mdi, risk_band, cluster_id
 
 # ============================================================
-# PDF REPORT GENERATOR
+# PDF Generator
 # ============================================================
 
-def generate_pdf(user_name, mdi, risk_band, title, description, responses):
+def generate_pdf(user_name, risk_band, diagnosis, suggestions):
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
+    y = 750
 
-    y = height - 50
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(50, y, "Mental Well-Being Insight Report")
+    c.drawString(50, y, "Mental Well-Being Report")
     y -= 40
 
     c.setFont("Helvetica", 12)
@@ -168,20 +175,17 @@ def generate_pdf(user_name, mdi, risk_band, title, description, responses):
     c.drawString(50, y, f"Risk Level: {risk_band}")
     y -= 20
 
-    c.drawString(50, y, f"Cluster: {title}")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, y, diagnosis)
     y -= 30
 
-    c.setFont("Helvetica", 12)
-    c.drawString(50, y, description)
-    y -= 40
-
     c.setFont("Helvetica-Bold", 13)
-    c.drawString(50, y, "Your Responses")
+    c.drawString(50, y, "Recommended Activities")
     y -= 20
 
     c.setFont("Helvetica", 11)
-    for k, v in responses.items():
-        c.drawString(60, y, f"{k.replace('_',' ').title()}: {v}")
+    for s in suggestions:
+        c.drawString(60, y, f"- {s}")
         y -= 15
 
     c.setFont("Helvetica", 9)
@@ -199,45 +203,47 @@ def generate_pdf(user_name, mdi, risk_band, title, description, responses):
 # ============================================================
 
 st.markdown("<h1 style='text-align:center;'>Mental Health Cluster Insight Tool</h1>", unsafe_allow_html=True)
-st.markdown(
-    "<p style='text-align:center;color:gray;'>A supportive, non-diagnostic emotional well-being assessment.</p>",
-    unsafe_allow_html=True
-)
 st.markdown("<hr>", unsafe_allow_html=True)
 
-st.subheader("Your Details")
 user_name = st.text_input("Enter your name (optional)")
 
-st.subheader("Your Responses")
 user_input = {}
-
 for feature in features:
-    options = ui_categories[feature].dropna().tolist()
+    options = sorted(data[feature].dropna().unique().tolist())
     user_input[feature] = st.selectbox(friendly_labels[feature], options)
-
-st.markdown("<hr>", unsafe_allow_html=True)
 
 if st.button("Generate My Well-Being Insights"):
     mdi, risk_band, cluster_id = predict_cluster(user_input)
 
-    title, description = cluster_interpretations[risk_band][cluster_id]
+    color_map = {
+        "Low": "#2ecc71",
+        "Moderate": "#f1c40f",
+        "High": "#e74c3c"
+    }
 
-    st.success(f"Risk Level: {risk_band}")
-    st.subheader(title)
-    st.write(description)
-
-    st.caption(
-        "This assessment combines symptom severity and pattern-based clustering "
-        "to provide responsible and supportive insights."
+    st.markdown(
+        f"""
+        <div style="padding:12px;border-radius:6px;
+        background-color:{color_map[risk_band]};
+        color:black;font-weight:bold;">
+        Risk Level: {risk_band}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
+
+    st.subheader("Assessment Summary")
+    st.write(diagnosis_map[risk_band])
+
+    st.subheader("Suggested Activities")
+    for s in suggestions_map[risk_band]:
+        st.write(f"• {s}")
 
     pdf = generate_pdf(
         user_name,
-        mdi,
         risk_band,
-        title,
-        description,
-        user_input
+        diagnosis_map[risk_band],
+        suggestions_map[risk_band]
     )
 
     st.download_button(
