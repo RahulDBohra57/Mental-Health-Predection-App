@@ -41,8 +41,6 @@ The dataset consists of **self-reported mental health indicators**, all categori
 - `family_history`
 - `treatment`
 
-> Used for background context only (not severity drivers)
-
 #### 2. Core Symptom Indicators
 
 - `Growing_Stress`
@@ -50,14 +48,10 @@ The dataset consists of **self-reported mental health indicators**, all categori
 - `Mood_Swings`
 - `Coping_Struggles`
 
-> Primary indicators of emotional distress
-
 #### 3. Functional Impact Indicators
 
 - `Work_Interest`
 - `Social_Weakness`
-
-> Strongest signals of depression-like patterns
 
 ---
 
@@ -103,17 +97,6 @@ The Streamlit app allows users to:
 - Download a **PDF wellness report**
 
 > The app **does not diagnose** and clearly communicates this to users.
-
----
-
-## 📄 PDF Report Contents
-
-- User name (optional)
-- Date & time generated
-- Risk level
-- Cluster title & interpretation
-- User responses
-- Ethical disclaimer
 
 ---
 
