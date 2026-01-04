@@ -96,8 +96,6 @@ The Streamlit app allows users to:
   - Supportive interpretation
 - Download a **PDF wellness report**
 
-> The app **does not diagnose** and clearly communicates this to users.
-
 ---
 
 ## 🎯 Why This Project Is Strong
