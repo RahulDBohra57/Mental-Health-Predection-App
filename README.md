@@ -98,16 +98,6 @@ The Streamlit app allows users to:
 
 ---
 
-## 🎯 Why This Project Is Strong
-
-- Clinically aware design
-- Hybrid ML + rules (industry standard)
-- Explainable & interpretable
-- Avoids false reassurance
-- Suitable for interviews, viva, and production demos
-
----
-
 ## 👤 Author Notes
 
 This project demonstrates how **responsible AI design** is essential when applying machine learning to sensitive domains like mental health.
