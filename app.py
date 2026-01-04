@@ -1,6 +1,6 @@
 # ============================================================
 # Mental Health Cluster Insight Tool
-# FINAL PRODUCTION VERSION
+# FINAL PRODUCTION VERSION (UI UPDATED)
 # ============================================================
 
 import streamlit as st
@@ -33,7 +33,7 @@ def load_artifacts():
 mca, cluster_models, severity_map = load_artifacts()
 
 # ============================================================
-# Feature Definitions (MUST MATCH TRAINING)
+# Feature Definitions
 # ============================================================
 
 features = [
@@ -121,47 +121,26 @@ diagnosis_map = {
 }
 
 meaning_map = {
-    "Low": (
-        "This suggests that current stressors are being managed effectively and "
-        "no immediate intervention is indicated."
-    ),
-    "Moderate": (
-        "This suggests rising emotional strain that may begin to interfere with daily "
-        "functioning if left unaddressed."
-    ),
-    "High": (
-        "This suggests significant emotional distress where additional support or "
-        "professional guidance may be beneficial."
-    )
+    "Low": "This suggests that current stressors are being managed effectively.",
+    "Moderate": "This suggests rising emotional strain that may begin to interfere with daily functioning.",
+    "High": "This suggests significant emotional distress where additional support may be beneficial."
 }
 
 suggestions_map = {
     "Low": [
-        "Maintain consistent sleep and daily routines.",
-        "Continue activities that help you relax or feel fulfilled.",
-        "Stay socially connected with trusted people.",
-        "Practice occasional self-reflection or journaling.",
-        "Maintain healthy work–life boundaries.",
-        "Respond early when stress levels increase."
+        "Maintain consistent daily routines.",
+        "Stay socially connected.",
+        "Respond early to rising stress."
     ],
     "Moderate": [
-        "Break daily tasks into smaller, manageable steps.",
-        "Schedule intentional rest or recovery time.",
-        "Reduce non-essential commitments temporarily.",
-        "Engage in light physical activity such as walking.",
-        "Practice breathing or grounding exercises.",
-        "Talk openly with a trusted person.",
-        "Rebuild consistent sleep and meal routines."
+        "Break tasks into manageable steps.",
+        "Schedule intentional rest.",
+        "Talk openly with someone you trust."
     ],
     "High": [
-        "Prioritize rest and reduce mental overload.",
-        "Seek support instead of coping alone.",
-        "Use grounding techniques like slow breathing.",
+        "Prioritize rest and reduce overload.",
         "Avoid major decisions while overwhelmed.",
-        "Create predictable daily routines.",
-        "Limit unnecessary stress exposure.",
-        "Consider professional mental health support.",
-        "Spend time in calming environments."
+        "Consider professional mental health support."
     ]
 }
 
@@ -183,12 +162,17 @@ def predict_cluster(user_input):
     return mdi, risk_band, cluster_id
 
 # ============================================================
-# PDF GENERATOR
+# PDF Generator
 # ============================================================
 
 def generate_pdf(user_name, mdi, risk_band, diagnosis, meaning, suggestions):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=48, rightMargin=48)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=48,
+        rightMargin=48
+    )
 
     styles = getSampleStyleSheet()
     story = []
@@ -200,18 +184,24 @@ def generate_pdf(user_name, mdi, risk_band, diagnosis, meaning, suggestions):
     }
 
     # Title
-    story.append(Paragraph("<b>Mental Well-Being Report</b>", styles["Title"]))
+    story.append(Paragraph("<b>Mental Health Report</b>", styles["Title"]))
     story.append(Spacer(1, 12))
 
     now = datetime.now().strftime("%d/%m/%Y, %I:%M %p")
     meta = f"<b>Date Generated:</b> {now}"
     if user_name:
         meta += f"<br/><b>Prepared For:</b> {user_name}"
+
     story.append(Paragraph(meta, styles["Normal"]))
     story.append(Spacer(1, 16))
 
-    # Risk Badge (TABLE-BASED)
-    risk_table = Table([[f"Risk Level: {risk_band}"]], colWidths=[400], rowHeights=[34])
+    # Risk badge
+    risk_table = Table(
+        [[f"Risk Level: {risk_band}"]],
+        colWidths=[400],
+        rowHeights=[34]
+    )
+
     risk_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), risk_colors[risk_band]),
         ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
@@ -220,49 +210,40 @@ def generate_pdf(user_name, mdi, risk_band, diagnosis, meaning, suggestions):
         ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 14),
     ]))
+
     story.append(risk_table)
     story.append(Spacer(1, 16))
 
-    # MDI Scale
-    marker = "■□□□□" if mdi <= 3 else "□□■□□" if mdi <= 7 else "□□□□■"
-    story.append(Paragraph(
-        f"<para align='center'><font size='10'>Low&nbsp;&nbsp;Moderate&nbsp;&nbsp;High</font><br/>"
-        f"<font size='12'>{marker}</font><br/>"
-        f"<font size='9'>MDI Score: {mdi}</font></para>",
-        styles["Normal"]
-    ))
-    story.append(Spacer(1, 20))
-
-    # Clinical Summary
+    # Summary
     story.append(Paragraph("<b>Clinical Summary</b>", styles["Heading2"]))
     story.append(Spacer(1, 6))
     story.append(Paragraph(diagnosis, styles["BodyText"]))
     story.append(Spacer(1, 14))
 
-    # What This Means
     story.append(Paragraph("<b>What This Means</b>", styles["Heading2"]))
     story.append(Spacer(1, 6))
     story.append(Paragraph(meaning, styles["BodyText"]))
-    story.append(Spacer(1, 20))
+    story.append(Spacer(1, 16))
 
     # Recommendations
     story.append(Paragraph("<b>Recommended Activities</b>", styles["Heading2"]))
     story.append(Spacer(1, 8))
-    bullets = [ListItem(Paragraph(s, styles["BodyText"])) for s in suggestions]
-    story.append(ListFlowable(bullets, bulletType="bullet"))
-    story.append(Spacer(1, 24))
 
-    # Footer
+    bullets = [
+        ListItem(Paragraph(item, styles["BodyText"]))
+        for item in suggestions
+    ]
+
+    story.append(ListFlowable(bullets, bulletType="bullet"))
+    story.append(Spacer(1, 20))
+
+    # Disclaimer
+    story.append(Spacer(1, 20))
     story.append(Paragraph(
-        "<para align='center'><font size='8' color='#7f8c8d'>"
-        "Generated by <b>Mental Health Cluster Insight Tool</b><br/>"
-        "Data-informed mental well-being insights</font></para>",
-        styles["Normal"]
-    ))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph(
-        "<font size='8' color='#7f8c8d'>"
-        "<b>Disclaimer:</b> This report is not a medical diagnosis.</font>",
+        "<font size='8' color='#7f8c8d'><b>Disclaimer:</b> "
+        "This report is for informational purposes only and "
+        "is not a medical diagnosis. Please consult a qualified "
+        "mental health professional if you need support.</font>",
         styles["Normal"]
     ))
 
@@ -270,19 +251,52 @@ def generate_pdf(user_name, mdi, risk_band, diagnosis, meaning, suggestions):
     buffer.seek(0)
     return buffer
 
+
 # ============================================================
 # STREAMLIT UI
 # ============================================================
 
-st.title("Mental Health Cluster Insight Tool")
+st.title("Your Mental Health Insights")
+
 user_name = st.text_input("Enter your name (optional)")
 
-user_input = {f: st.selectbox(question_config[f]["question"], question_config[f]["options"]) for f in features}
+user_input = {
+    f: st.selectbox(
+        question_config[f]["question"],
+        question_config[f]["options"]
+    )
+    for f in features
+}
 
 if st.button("Generate My Well-Being Insights"):
     mdi, risk_band, _ = predict_cluster(user_input)
 
-    st.success(f"Risk Level: {risk_band}")
+    # Risk color mapping
+    risk_ui = {
+        "Low": ("#27ae60", "Risk Level: Low"),
+        "Moderate": ("#f39c12", "Risk Level: Moderate"),
+        "High": ("#c0392b", "Risk Level: High")
+    }
+
+    color, label = risk_ui[risk_band]
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color:{color};
+            padding:12px;
+            border-radius:8px;
+            color:white;
+            font-weight:bold;
+            text-align:left;
+            font-size:16px;">
+            {label}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.write("")
     st.write(diagnosis_map[risk_band])
 
     pdf = generate_pdf(
@@ -294,4 +308,24 @@ if st.button("Generate My Well-Being Insights"):
         suggestions_map[risk_band]
     )
 
-    st.download_button("Download Wellness Report (PDF)", pdf, "Wellness_Report.pdf")
+    st.download_button(
+        "Download Wellness Report (PDF)",
+        pdf,
+        "Wellness_Report.pdf"
+    )
+
+# ============================================================
+# DISCLAIMER
+# ============================================================
+
+st.markdown("---")
+st.markdown(
+    """
+    <p style="font-size:14px;color:#7f8c8d;text-align:left;">
+    <b>Disclaimer:</b> This app is just for project use and should not be considered as an
+    alternative for professional help. If you are facing any kind of mental health symptoms,
+    consult a professional.
+    </p>
+    """,
+    unsafe_allow_html=True
+)
