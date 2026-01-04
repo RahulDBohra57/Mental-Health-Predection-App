@@ -1,6 +1,6 @@
 App Link: https://your-mental-health-predection-app.streamlit.app/
 
-# 🧠 Mental Health Cluster Insight Tool
+# 🧠 Mental Health Prediction App (Clustering Based)
 
 A **clinical-grade, ethical, and explainable mental well-being assessment tool** built using unsupervised machine learning and rule-based severity logic. The application helps users understand **patterns** in their emotional well-being — **not** diagnose medical conditions.
 
@@ -25,25 +25,8 @@ This ensures that **high-distress users are never mixed with low-distress profil
 - 🧠 Mental Distress Index (MDI) for severity awareness
 - 🛡 Risk-band first modeling (clinical safety layer)
 - 📊 MCA-based clustering for categorical data
-- 🧬 Separate handling of symptoms vs functional impact
 - 📄 Downloadable PDF well-being report
-- ⚖️ Ethical, non-diagnostic framing
 - 🧑‍⚕️ Interview & academic-ready architecture
-
----
-
-## 📂 Project Structure
-
-```
-├── app.py                         # Streamlit application
-├── Mental Health Dataset.csv      # Training dataset
-├── Mental Health Analysis App.ipynb  # Model training notebook
-├── mca_transformer.joblib         # Trained MCA transformer
-├── risk_band_cluster_models.joblib # Cluster models per risk band
-├── severity_map.joblib            # Severity encoding dictionary
-├── ui_categories.csv              # UI dropdown options
-├── README.md                      # Project documentation
-```
 
 ---
 
@@ -78,32 +61,6 @@ The dataset consists of **self-reported mental health indicators**, all categori
 
 ---
 
-## 🧠 Mental Distress Index (MDI)
-
-To overcome the limitations of pure clustering, the project introduces a **Mental Distress Index**.
-
-### Severity Encoding
-
-| Response | Severity Score |
-| -------- | -------------- |
-| No       | 0              |
-| Low      | 1              |
-| Medium   | 2              |
-| High     | 3              |
-| Yes      | 2              |
-
-### MDI Formula
-
-The MDI is computed by combining:
-
-- Core symptom severity
-- Functional impairment
-- Inverse work interest (low interest → higher distress)
-
-> Higher MDI = higher emotional distress
-
----
-
 ## 🛡 Risk Banding (Clinical Safety Layer)
 
 Before clustering, each user is assigned a **risk band** based on MDI:
@@ -115,32 +72,6 @@ Before clustering, each user is assigned a **risk band** based on MDI:
 | High      | Significant emotional distress         |
 
 This prevents **severe cases from being averaged into mild clusters**.
-
----
-
-## 🔍 Modeling Approach
-
-### Why Not Pure KMeans?
-
-- KMeans optimizes distance, **not severity**
-- Extreme emotional responses get pulled toward centroids
-- Dangerous in mental-health applications
-
-### Final Architecture
-
-```
-User Input
-   ↓
-Mental Distress Index (MDI)
-   ↓
-Risk Band Assignment
-   ↓
-MCA Transformation
-   ↓
-Weighted Clustering (per risk band)
-   ↓
-Clinically Interpretable Cluster Output
-```
 
 ---
 
@@ -186,18 +117,6 @@ The Streamlit app allows users to:
 
 ---
 
-## ⚠️ Ethical Disclaimer
-
-This tool:
-
-- ❌ Does NOT diagnose mental illness
-- ❌ Is NOT a replacement for professional care
-- ✅ Provides pattern-based well-being insights only
-
-Users experiencing emotional distress are advised to consult a qualified mental health professional.
-
----
-
 ## 🎯 Why This Project Is Strong
 
 - Clinically aware design
@@ -205,16 +124,6 @@ Users experiencing emotional distress are advised to consult a qualified mental 
 - Explainable & interpretable
 - Avoids false reassurance
 - Suitable for interviews, viva, and production demos
-
----
-
-## 🚀 Future Enhancements
-
-- Confidence / distance-to-centroid score
-- Crisis escalation messaging
-- Longitudinal tracking
-- Model validation with labeled data
-- Deployment on cloud (AWS / GCP)
 
 ---
 
