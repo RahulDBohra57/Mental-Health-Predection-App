@@ -1,3 +1,5 @@
+App Link: https://your-mental-health-predection-app.streamlit.app/
+
 # 🧠 Mental Health Cluster Insight Tool
 
 A **clinical-grade, ethical, and explainable mental well-being assessment tool** built using unsupervised machine learning and rule-based severity logic. The application helps users understand **patterns** in their emotional well-being — **not** diagnose medical conditions.
