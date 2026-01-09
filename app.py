@@ -1,6 +1,5 @@
 # ============================================================
-# Mental Health Cluster Insight Tool
-# FINAL PRODUCTION VERSION (UI UPDATED)
+# PsycheLens-AI-Driven-Mental-Well-Being-Analytics-Tool
 # ============================================================
 
 import streamlit as st
@@ -19,9 +18,7 @@ from reportlab.platypus import (
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 
-# ============================================================
 # Load Artifacts
-# ============================================================
 
 @st.cache_resource
 def load_artifacts():
@@ -32,9 +29,7 @@ def load_artifacts():
 
 mca, cluster_models, severity_map = load_artifacts()
 
-# ============================================================
 # Feature Definitions
-# ============================================================
 
 features = [
     "family_history",
@@ -56,9 +51,7 @@ core_symptoms = [
     "Social_Weakness"
 ]
 
-# ============================================================
 # UI Questions
-# ============================================================
 
 question_config = {
     "family_history": {
@@ -95,9 +88,7 @@ question_config = {
     }
 }
 
-# ============================================================
 # MDI & Risk Band
-# ============================================================
 
 def calculate_mdi(user_input):
     return sum(severity_map.get(user_input[col], 1) for col in core_symptoms)
@@ -110,9 +101,7 @@ def assign_risk_band(mdi):
     else:
         return "Low"
 
-# ============================================================
 # Text Content
-# ============================================================
 
 diagnosis_map = {
     "Low": "Your responses suggest stable emotional well-being with healthy coping patterns.",
@@ -144,9 +133,7 @@ suggestions_map = {
     ]
 }
 
-# ============================================================
 # Prediction
-# ============================================================
 
 def predict_cluster(user_input):
     mdi = calculate_mdi(user_input)
@@ -161,9 +148,7 @@ def predict_cluster(user_input):
 
     return mdi, risk_band, cluster_id
 
-# ============================================================
 # PDF Generator
-# ============================================================
 
 def generate_pdf(user_name, mdi, risk_band, diagnosis, meaning, suggestions):
     buffer = BytesIO()
@@ -252,11 +237,9 @@ def generate_pdf(user_name, mdi, risk_band, diagnosis, meaning, suggestions):
     return buffer
 
 
-# ============================================================
 # STREAMLIT UI
-# ============================================================
 
-st.title("Your Mental Health Insights")
+st.title("PsycheLens - AI Driven Mental Well Being Analytics Tool")
 
 user_name = st.text_input("Enter your name (optional)")
 
